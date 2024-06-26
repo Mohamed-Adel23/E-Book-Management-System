@@ -10,12 +10,14 @@ namespace EBMS.Data.DataAccess
 
         // DbSets
         public DbSet<Book> Books { get; set; }
+        public DbSet<Author> Authors { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Wishlist> Wishlists { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<BookCategory> BookCategories { get; set; }
         public DbSet<BookOrder> BookOrders { get; set; }
+        public DbSet<BookDownload> BookDownloads { get; set; }
 
         // Models Configurations
         protected override void OnModelCreating(ModelBuilder builder)

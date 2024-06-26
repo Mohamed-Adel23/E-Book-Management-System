@@ -11,37 +11,24 @@ namespace EBMS.Data.DataAccess.Config
                    .HasColumnType("NVARCHAR")
                    .HasMaxLength(255)
                    .IsRequired();
-            builder.Property(x => x.Address)
-                   .HasColumnType("NVARCHAR")
-                   .HasMaxLength(255)
-                   .IsRequired(false);
-            builder.Property(x => x.Bio)
-                   .HasColumnType("NVARCHAR")
-                   .HasMaxLength(255)
-                   .IsRequired(false);
+            builder.Property(x => x.Email)
+                   .IsRequired();
+            builder.Property(x => x.UserName)
+                   .IsRequired();
             builder.Property(x => x.DateOfBirth)
                    .HasColumnType("DATE")
                    .IsRequired(false);
-            builder.Property(x => x.AuthorFile)
-                   .HasColumnType("VARCHAR")
-                   .HasMaxLength(255)
-                   .IsRequired();
             builder.Property(x => x.ProfilePic)
                    .HasColumnType("IMAGE")
-                   .IsRequired();
+                   .IsRequired(false);
             builder.Property(x => x.Created_at)
                    .HasColumnType("DATETIME")
-                   .HasDefaultValue(DateTime.UtcNow);
+                   .IsRequired();
             builder.Property(x => x.Updated_at)
                    .HasColumnType("DATETIME")
                    .IsRequired(false);
 
             // Relationships
-            // 1 Author => N Books
-            builder.HasMany(x => x.Books)
-                   .WithOne(x => x.Author)
-                   .HasForeignKey(x => x.AuthorId)
-                   .IsRequired();
             // 1 User => N Reviews
             builder.HasMany(x => x.Reviews)
                    .WithOne(x => x.BookUser)

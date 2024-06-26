@@ -13,7 +13,7 @@ namespace EBMS.Data.DataAccess.Config
                    .ValueGeneratedOnAdd();
             builder.Property(x => x.Created_at)
                    .HasColumnType("DATETIME")
-                   .HasDefaultValue(DateTime.UtcNow);
+                   .IsRequired();
         }
     }
 }

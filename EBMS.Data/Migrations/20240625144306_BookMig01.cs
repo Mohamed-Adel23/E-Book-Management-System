@@ -31,16 +31,13 @@ namespace EBMS.Data.Migrations
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     FullName = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: false),
-                    Bio = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: true),
-                    Address = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: true),
                     DateOfBirth = table.Column<DateOnly>(type: "DATE", nullable: true),
-                    ProfilePic = table.Column<byte[]>(type: "IMAGE", nullable: false),
-                    AuthorFile = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false, defaultValue: new DateTime(2024, 6, 18, 13, 36, 24, 224, DateTimeKind.Utc).AddTicks(9932)),
+                    ProfilePic = table.Column<byte[]>(type: "IMAGE", nullable: true),
+                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false),
                     Updated_at = table.Column<DateTime>(type: "DATETIME", nullable: true),
-                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -59,6 +56,23 @@ namespace EBMS.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Authors",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FullName = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: false),
+                    Bio = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: false),
+                    ProfilePic = table.Column<byte[]>(type: "IMAGE", nullable: true),
+                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false),
+                    Updated_at = table.Column<DateTime>(type: "DATETIME", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Authors", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
                 {
@@ -66,7 +80,7 @@ namespace EBMS.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: true),
-                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false, defaultValue: new DateTime(2024, 6, 18, 13, 36, 24, 226, DateTimeKind.Utc).AddTicks(3561)),
+                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false),
                     Updated_at = table.Column<DateTime>(type: "DATETIME", nullable: true)
                 },
                 constraints: table =>
@@ -181,32 +195,26 @@ namespace EBMS.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Books",
+                name: "BookRefreshToken",
                 columns: table => new
                 {
+                    BookUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: false),
-                    Description = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: true),
-                    Price = table.Column<decimal>(type: "DECIMAL(7,2)", precision: 7, scale: 2, nullable: false),
-                    Discount = table.Column<decimal>(type: "DECIMAL(5,2)", precision: 5, scale: 2, nullable: false),
-                    AvailableQuantity = table.Column<byte>(type: "TINYINT", nullable: false),
-                    BookPath = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    CoverImage = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    Published_at = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false, defaultValue: new DateTime(2024, 6, 18, 13, 36, 24, 223, DateTimeKind.Utc).AddTicks(4956)),
-                    Updated_at = table.Column<DateTime>(type: "DATETIME", nullable: true),
-                    AuthorId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    Token = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Expires_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Revoked_at = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Books", x => x.Id);
+                    table.PrimaryKey("PK_BookRefreshToken", x => new { x.BookUserId, x.Id });
                     table.ForeignKey(
-                        name: "FK_Books_AspNetUsers_AuthorId",
-                        column: x => x.AuthorId,
+                        name: "FK_BookRefreshToken_AspNetUsers_BookUserId",
+                        column: x => x.BookUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -219,7 +227,7 @@ namespace EBMS.Data.Migrations
                     PostalCode = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: false),
                     PhoneNumber = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: false),
                     Status = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: true),
-                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false, defaultValue: new DateTime(2024, 6, 18, 13, 36, 24, 226, DateTimeKind.Utc).AddTicks(6102)),
+                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false),
                     Updated_at = table.Column<DateTime>(type: "DATETIME", nullable: true),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
@@ -230,6 +238,36 @@ namespace EBMS.Data.Migrations
                         name: "FK_Orders_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Books",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: false),
+                    Description = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: true),
+                    PhysicalPrice = table.Column<decimal>(type: "DECIMAL(7,2)", precision: 7, scale: 2, nullable: false),
+                    DownloadPrice = table.Column<decimal>(type: "DECIMAL(7,2)", precision: 7, scale: 2, nullable: false),
+                    Discount = table.Column<decimal>(type: "DECIMAL(5,2)", precision: 5, scale: 2, nullable: false),
+                    AvailableQuantity = table.Column<byte>(type: "TINYINT", nullable: false),
+                    BookFilePath = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    BookCoverImage = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    Published_at = table.Column<DateOnly>(type: "DATE", nullable: false),
+                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false),
+                    Updated_at = table.Column<DateTime>(type: "DATETIME", nullable: true),
+                    AuthorId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Books", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Books_Authors_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "Authors",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -259,56 +297,26 @@ namespace EBMS.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Reviews",
+                name: "BookDownloads",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Rate = table.Column<byte>(type: "TINYINT", nullable: false),
-                    Comment = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: true),
-                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false, defaultValue: new DateTime(2024, 6, 18, 13, 36, 24, 226, DateTimeKind.Utc).AddTicks(8529)),
-                    Updated_at = table.Column<DateTime>(type: "DATETIME", nullable: true),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    BookId = table.Column<int>(type: "int", nullable: false)
+                    BookId = table.Column<int>(type: "int", nullable: false),
+                    BookUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CurrentPrice = table.Column<decimal>(type: "DECIMAL(7,2)", precision: 7, scale: 2, nullable: false),
+                    Downloaded_at = table.Column<DateTime>(type: "DATETIME", nullable: false),
+                    Status = table.Column<bool>(type: "BIT", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Reviews", x => x.Id);
+                    table.PrimaryKey("PK_BookDownloads", x => new { x.BookId, x.BookUserId });
                     table.ForeignKey(
-                        name: "FK_Reviews_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Reviews_Books_BookId",
-                        column: x => x.BookId,
-                        principalTable: "Books",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Wishlists",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false, defaultValue: new DateTime(2024, 6, 18, 13, 36, 24, 227, DateTimeKind.Utc).AddTicks(756)),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    BookId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Wishlists", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Wishlists_AspNetUsers_UserId",
-                        column: x => x.UserId,
+                        name: "FK_BookDownloads_AspNetUsers_BookUserId",
+                        column: x => x.BookUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Wishlists_Books_BookId",
+                        name: "FK_BookDownloads_Books_BookId",
                         column: x => x.BookId,
                         principalTable: "Books",
                         principalColumn: "Id",
@@ -337,6 +345,63 @@ namespace EBMS.Data.Migrations
                         name: "FK_BookOrders_Orders_OrderId",
                         column: x => x.OrderId,
                         principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Reviews",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Rate = table.Column<byte>(type: "TINYINT", nullable: false),
+                    Comment = table.Column<string>(type: "NVARCHAR(255)", maxLength: 255, nullable: true),
+                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false),
+                    Updated_at = table.Column<DateTime>(type: "DATETIME", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    BookId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reviews", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Reviews_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Reviews_Books_BookId",
+                        column: x => x.BookId,
+                        principalTable: "Books",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Wishlists",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Created_at = table.Column<DateTime>(type: "DATETIME", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    BookId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Wishlists", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Wishlists_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Wishlists_Books_BookId",
+                        column: x => x.BookId,
+                        principalTable: "Books",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -384,6 +449,11 @@ namespace EBMS.Data.Migrations
                 name: "IX_BookCategories_BookId",
                 table: "BookCategories",
                 column: "BookId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BookDownloads_BookUserId",
+                table: "BookDownloads",
+                column: "BookUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BookOrders_OrderId",
@@ -443,7 +513,13 @@ namespace EBMS.Data.Migrations
                 name: "BookCategories");
 
             migrationBuilder.DropTable(
+                name: "BookDownloads");
+
+            migrationBuilder.DropTable(
                 name: "BookOrders");
+
+            migrationBuilder.DropTable(
+                name: "BookRefreshToken");
 
             migrationBuilder.DropTable(
                 name: "Reviews");
@@ -465,6 +541,9 @@ namespace EBMS.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Authors");
         }
     }
 }

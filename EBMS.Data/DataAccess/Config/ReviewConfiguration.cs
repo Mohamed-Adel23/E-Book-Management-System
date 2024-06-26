@@ -20,7 +20,7 @@ namespace EBMS.Data.DataAccess.Config
                    .IsRequired(false);
             builder.Property(x => x.Created_at)
                    .HasColumnType("DATETIME")
-                   .HasDefaultValue(DateTime.UtcNow);
+                   .IsRequired();
             builder.Property(x => x.Updated_at)
                    .HasColumnType("DATETIME")
                    .IsRequired(false);

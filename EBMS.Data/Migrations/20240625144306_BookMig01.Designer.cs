@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EBMS.Data.Migrations
 {
     [DbContext(typeof(BookDbContext))]
-    [Migration("20240618133626_BookMig01")]
+    [Migration("20240625144306_BookMig01")]
     partial class BookMig01
     {
         /// <inheritdoc />
@@ -25,6 +25,38 @@ namespace EBMS.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("EBMS.Infrastructure.Models.Author", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Bio")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("NVARCHAR");
+
+                    b.Property<DateTime>("Created_at")
+                        .HasColumnType("DATETIME");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("NVARCHAR");
+
+                    b.Property<byte[]>("ProfilePic")
+                        .HasColumnType("IMAGE");
+
+                    b.Property<DateTime?>("Updated_at")
+                        .HasColumnType("DATETIME");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Authors", (string)null);
+                });
+
             modelBuilder.Entity("EBMS.Infrastructure.Models.Book", b =>
                 {
                     b.Property<int>("Id")
@@ -33,27 +65,24 @@ namespace EBMS.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AuthorId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
 
                     b.Property<byte>("AvailableQuantity")
                         .HasColumnType("TINYINT");
 
-                    b.Property<string>("BookPath")
+                    b.Property<string>("BookCoverImage")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("VARCHAR");
 
-                    b.Property<string>("CoverImage")
+                    b.Property<string>("BookFilePath")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("VARCHAR");
 
                     b.Property<DateTime>("Created_at")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("DATETIME")
-                        .HasDefaultValue(new DateTime(2024, 6, 18, 13, 36, 24, 223, DateTimeKind.Utc).AddTicks(4956));
+                        .HasColumnType("DATETIME");
 
                     b.Property<string>("Description")
                         .HasMaxLength(255)
@@ -63,12 +92,16 @@ namespace EBMS.Data.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("DECIMAL");
 
-                    b.Property<decimal>("Price")
+                    b.Property<decimal>("DownloadPrice")
                         .HasPrecision(7, 2)
                         .HasColumnType("DECIMAL");
 
-                    b.Property<DateTime>("Published_at")
-                        .HasColumnType("datetime2");
+                    b.Property<decimal>("PhysicalPrice")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("DECIMAL");
+
+                    b.Property<DateOnly>("Published_at")
+                        .HasColumnType("DATE");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -98,6 +131,33 @@ namespace EBMS.Data.Migrations
                     b.HasIndex("BookId");
 
                     b.ToTable("BookCategories", (string)null);
+                });
+
+            modelBuilder.Entity("EBMS.Infrastructure.Models.BookDownload", b =>
+                {
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BookUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("CurrentPrice")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("DECIMAL");
+
+                    b.Property<DateTime>("Downloaded_at")
+                        .HasColumnType("DATETIME");
+
+                    b.Property<bool>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("BIT")
+                        .HasDefaultValue(false);
+
+                    b.HasKey("BookId", "BookUserId");
+
+                    b.HasIndex("BookUserId");
+
+                    b.ToTable("BookDownloads", (string)null);
                 });
 
             modelBuilder.Entity("EBMS.Infrastructure.Models.BookOrder", b =>
@@ -130,32 +190,18 @@ namespace EBMS.Data.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<string>("Address")
-                        .HasMaxLength(255)
-                        .HasColumnType("NVARCHAR");
-
-                    b.Property<string>("AuthorFile")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("VARCHAR");
-
-                    b.Property<string>("Bio")
-                        .HasMaxLength(255)
-                        .HasColumnType("NVARCHAR");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Created_at")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("DATETIME")
-                        .HasDefaultValue(new DateTime(2024, 6, 18, 13, 36, 24, 224, DateTimeKind.Utc).AddTicks(9932));
+                        .HasColumnType("DATETIME");
 
                     b.Property<DateOnly?>("DateOfBirth")
                         .HasColumnType("DATE");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -191,7 +237,6 @@ namespace EBMS.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<byte[]>("ProfilePic")
-                        .IsRequired()
                         .HasColumnType("IMAGE");
 
                     b.Property<string>("SecurityStamp")
@@ -204,6 +249,7 @@ namespace EBMS.Data.Migrations
                         .HasColumnType("DATETIME");
 
                     b.Property<string>("UserName")
+                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -229,9 +275,7 @@ namespace EBMS.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("Created_at")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("DATETIME")
-                        .HasDefaultValue(new DateTime(2024, 6, 18, 13, 36, 24, 226, DateTimeKind.Utc).AddTicks(3561));
+                        .HasColumnType("DATETIME");
 
                     b.Property<string>("Description")
                         .HasMaxLength(255)
@@ -259,9 +303,7 @@ namespace EBMS.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("Created_at")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("DATETIME")
-                        .HasDefaultValue(new DateTime(2024, 6, 18, 13, 36, 24, 226, DateTimeKind.Utc).AddTicks(6102));
+                        .HasColumnType("DATETIME");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -312,9 +354,7 @@ namespace EBMS.Data.Migrations
                         .HasColumnType("NVARCHAR");
 
                     b.Property<DateTime>("Created_at")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("DATETIME")
-                        .HasDefaultValue(new DateTime(2024, 6, 18, 13, 36, 24, 226, DateTimeKind.Utc).AddTicks(8529));
+                        .HasColumnType("DATETIME");
 
                     b.Property<byte>("Rate")
                         .HasColumnType("TINYINT");
@@ -347,9 +387,7 @@ namespace EBMS.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Created_at")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("DATETIME")
-                        .HasDefaultValue(new DateTime(2024, 6, 18, 13, 36, 24, 227, DateTimeKind.Utc).AddTicks(756));
+                        .HasColumnType("DATETIME");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -499,7 +537,7 @@ namespace EBMS.Data.Migrations
 
             modelBuilder.Entity("EBMS.Infrastructure.Models.Book", b =>
                 {
-                    b.HasOne("EBMS.Infrastructure.Models.BookUser", "Author")
+                    b.HasOne("EBMS.Infrastructure.Models.Author", "Author")
                         .WithMany("Books")
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -527,6 +565,25 @@ namespace EBMS.Data.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("EBMS.Infrastructure.Models.BookDownload", b =>
+                {
+                    b.HasOne("EBMS.Infrastructure.Models.Book", "Book")
+                        .WithMany("BookDownloads")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EBMS.Infrastructure.Models.BookUser", "BookUser")
+                        .WithMany("BookDownloads")
+                        .HasForeignKey("BookUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("BookUser");
+                });
+
             modelBuilder.Entity("EBMS.Infrastructure.Models.BookOrder", b =>
                 {
                     b.HasOne("EBMS.Infrastructure.Models.Book", "Book")
@@ -544,6 +601,43 @@ namespace EBMS.Data.Migrations
                     b.Navigation("Book");
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("EBMS.Infrastructure.Models.BookUser", b =>
+                {
+                    b.OwnsMany("EBMS.Infrastructure.Models.Auth.BookRefreshToken", "BookRefreshTokens", b1 =>
+                        {
+                            b1.Property<string>("BookUserId")
+                                .HasColumnType("nvarchar(450)");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int");
+
+                            SqlServerPropertyBuilderExtensions.UseIdentityColumn(b1.Property<int>("Id"));
+
+                            b1.Property<DateTime>("Created_at")
+                                .HasColumnType("datetime2");
+
+                            b1.Property<DateTime>("Expires_at")
+                                .HasColumnType("datetime2");
+
+                            b1.Property<DateTime?>("Revoked_at")
+                                .HasColumnType("datetime2");
+
+                            b1.Property<string>("Token")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.HasKey("BookUserId", "Id");
+
+                            b1.ToTable("BookRefreshToken");
+
+                            b1.WithOwner()
+                                .HasForeignKey("BookUserId");
+                        });
+
+                    b.Navigation("BookRefreshTokens");
                 });
 
             modelBuilder.Entity("EBMS.Infrastructure.Models.Order", b =>
@@ -646,9 +740,16 @@ namespace EBMS.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("EBMS.Infrastructure.Models.Author", b =>
+                {
+                    b.Navigation("Books");
+                });
+
             modelBuilder.Entity("EBMS.Infrastructure.Models.Book", b =>
                 {
                     b.Navigation("BookCategories");
+
+                    b.Navigation("BookDownloads");
 
                     b.Navigation("BookOrders");
 
@@ -659,7 +760,7 @@ namespace EBMS.Data.Migrations
 
             modelBuilder.Entity("EBMS.Infrastructure.Models.BookUser", b =>
                 {
-                    b.Navigation("Books");
+                    b.Navigation("BookDownloads");
 
                     b.Navigation("Orders");
 
