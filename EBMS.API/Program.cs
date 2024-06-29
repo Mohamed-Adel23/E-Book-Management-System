@@ -1,5 +1,7 @@
+using EBMS.Data;
 using EBMS.Data.DataAccess;
 using EBMS.Data.Services.Auth;
+using EBMS.Infrastructure;
 using EBMS.Infrastructure.Helpers;
 using EBMS.Infrastructure.IServices.IAuth;
 using EBMS.Infrastructure.Models;
@@ -54,6 +56,9 @@ namespace EBMS.API
                     ClockSkew = TimeSpan.Zero
                 };
             });
+            // Register Unit Of Work
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

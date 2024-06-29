@@ -20,4 +20,9 @@
     <ProjectReference Include="..\EBMS.Data\EBMS.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\Book\Files\" />
+    <Folder Include="wwwroot\Book\CoverImages\" />
+  </ItemGroup>
+
 </Project>
