@@ -7,8 +7,8 @@ namespace EBMS.Infrastructure.IServices.IAuth
     {
         Task<BookDTO> CreateAsync(BookModel model);
         Task<BookDTO> GetBookByIdAsync(int id);
-        //Task<IEnumerable<BookDTO>> GetAllBooksAsync();
-        //Task<BookDTO> UpdateAsync(int id, BookModel model);
-        //Task<bool> DeleteAsync(int id);
+        Task<IEnumerable<BookDTO>> GetAllBooksAsync();
+        Task<BookDTO> UpdateAsync(int id, BookModel model);
+        Task<bool> DeleteAsync(int id);
     }
 }

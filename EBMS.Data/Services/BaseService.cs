@@ -26,7 +26,7 @@ namespace EBMS.Data.Services
         }
 
         /// <summary>
-        /// Get All Entity Obects 
+        /// Get All Entity Objects 
         /// </summary>
         /// <returns></returns>
         public async Task<IEnumerable<T>> GetAllAsync()

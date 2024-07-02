@@ -54,7 +54,7 @@ namespace EBMS.API.Controllers
             var result = await _unitOfWork.Authors.GetAllAuthorsAsync();
 
             if(result is null)
-                return BadRequest(result);
+                return NotFound("There are not Authors Yet!");
 
             return Ok(result);
         }

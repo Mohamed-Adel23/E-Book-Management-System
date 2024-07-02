@@ -9,6 +9,7 @@ namespace EBMS.Infrastructure
         ICategoryService Categories { get; }
         IAuthorService Authors { get; }
         IBookService Books { get; }
+        IReviewService Reviews { get; }
 
         Task<int> CompleteAsync();
     }

@@ -17,7 +17,7 @@ namespace EBMS.Data.DataAccess.Config
             builder.Property(x => x.Comment)
                    .HasColumnType("NVARCHAR")
                    .HasMaxLength(255)
-                   .IsRequired(false);
+                   .IsRequired();
             builder.Property(x => x.Created_at)
                    .HasColumnType("DATETIME")
                    .IsRequired();

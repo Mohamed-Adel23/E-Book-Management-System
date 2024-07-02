@@ -3,12 +3,8 @@ using EBMS.Infrastructure.DTOs.Category;
 
 namespace EBMS.Infrastructure.DTOs.Book
 {
-    public class BookDTO
+    public class BookDTO : BaseDTO
     {
-        public string? Message { get; set; }
-
-        public int Id { get; set; }
-
         public string? Title { get; set; }
 
         public string? Description { get; set; }

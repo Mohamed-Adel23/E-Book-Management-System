@@ -53,8 +53,8 @@ namespace EBMS.API.Controllers
         {
             var result = await _unitOfWork.Categories.GetAllCatAsync();
 
-            if(result is null) 
-                return BadRequest(result);
+            if(result is null)
+                return NotFound("There are not Categories Yet!");
 
             return Ok(result);
         }

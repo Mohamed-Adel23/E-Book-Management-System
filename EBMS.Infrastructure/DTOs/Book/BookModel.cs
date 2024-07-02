@@ -12,10 +12,10 @@ namespace EBMS.Infrastructure.DTOs.Book
         [MaxLength(255)]
         public string? Description { get; set; }
         
-        [Range(0, (double)100000m, ErrorMessage = "Physical price must be a positive value")]
+        [Range(10, (double)100000m, ErrorMessage = "Physical price must be a positive value in range (10, 100000)")]
         public decimal PhysicalPrice { get; set; }
         
-        [Range(0, (double)100000m, ErrorMessage = "Physical price must be a positive value")]
+        [Range(10, (double)100000m, ErrorMessage = "Physical price must be a positive value in range (10, 100000)")]
         public decimal DownloadPrice { get; set; }
         
         public decimal Discount { get; set; }
@@ -23,9 +23,9 @@ namespace EBMS.Infrastructure.DTOs.Book
         [Range(0, int.MaxValue, ErrorMessage = "Available quantity must be a positive value")]
         public int AvailableQuantity { get; set; }
         
-        public IFormFile BookFilePath { get; set; } = null!;
+        public IFormFile? BookFilePath { get; set; }
         
-        public IFormFile BookCoverImage { get; set; } = null!;
+        public IFormFile? BookCoverImage { get; set; }
         
         public DateOnly Published_at { get; set; }
         
