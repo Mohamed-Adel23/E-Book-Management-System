@@ -1,5 +1,6 @@
 ﻿using EBMS.Data.DataAccess;
 using EBMS.Infrastructure.DTOs.Author;
+using EBMS.Infrastructure.DTOs.Book;
 using EBMS.Infrastructure.IServices;
 using EBMS.Infrastructure.Models;
 

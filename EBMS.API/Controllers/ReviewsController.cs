@@ -102,5 +102,35 @@ namespace EBMS.API.Controllers
 
             return NoContent();
         }
+
+        // Features
+        [HttpGet("Book/{id:int}", Name = "getBookReviews")]
+        public async Task<IActionResult> GetBookReviewsAsync(int id)
+        {
+            var result = await _unitOfWork.Reviews.GetBookReviewsAsync(id);
+
+            if (result is null)
+                return NotFound("Book is not Found!");
+
+            if(result.Count() <= 0)
+                return NotFound("Book doesn't have any review yet!");
+
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpGet("User/{userName}", Name = "getUserReviews")]
+        public async Task<IActionResult> GetUserReviewsAsync(string userName)
+        {
+            var result = await _unitOfWork.Reviews.GetUserReviewsAsync(userName);
+
+            if (result is null)
+                return NotFound("User is not Found!");
+
+            if (result.Count() <= 0)
+                return NotFound("User doesn't have any review yet!");
+
+            return Ok(result);
+        }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using EBMS.Infrastructure.IServices;
-using EBMS.Infrastructure.IServices.IAuth;
 
 namespace EBMS.Infrastructure
 {
@@ -10,6 +9,7 @@ namespace EBMS.Infrastructure
         IAuthorService Authors { get; }
         IBookService Books { get; }
         IReviewService Reviews { get; }
+        IWishlistService Wishlists { get; }
 
         Task<int> CompleteAsync();
     }

@@ -143,9 +143,44 @@ namespace EBMS.Data.Services
             return true;
         }
 
+        // Features
+        public async Task<IEnumerable<ReviewDTO>> GetBookReviewsAsync(int id)
+        {
+            var result = new List<ReviewDTO>();
+
+            // Check if the book Id is valid
+            var book = await _context.Books.FindAsync(id);
+            if (book is null)
+                return null!;
+
+            var reviews = _context.Reviews.Include(x => x.BookUser).Where(x => x.BookId == id);
+
+            foreach(var review in reviews)
+                result.Add(ReviewDataDTO(review, review.BookUser));
+
+            return result;
+        }
+
+        public async Task<IEnumerable<ReviewDTO>> GetUserReviewsAsync(string userName)
+        {
+            var result = new List<ReviewDTO>();
+
+            // Check if the username is valid
+            var user = await _userManager.FindByNameAsync(userName);
+            if(user is null)
+                return null!;
+
+            var reviews = _context.Reviews.Include(x => x.Book).Where(x => x.UserId == user.Id);
+
+            foreach (var review in reviews) 
+                result.Add(ReviewDataDTO(review, null!, review.Book));
+
+            return result;
+        }
 
 
-        private ReviewDTO ReviewDataDTO(Review model, BookUser user, Book book)
+
+        private ReviewDTO ReviewDataDTO(Review model, BookUser user, Book book = null!)
         {
             var result = new ReviewDTO();
 
@@ -156,21 +191,27 @@ namespace EBMS.Data.Services
             result.Updated_at = model.Updated_at;
 
             // Get the user
-            result.User = new ReviewUserDTO()
+            if(user is not null)
             {
-                FullName = user.FullName,
-                UserName = user.UserName,
-                Email = user.Email
-            };
+                result.User = new ReviewUserDTO()
+                {
+                    FullName = user.FullName,
+                    UserName = user.UserName,
+                    Email = user.Email
+                };
+            }
             // Get The Book
-            result.Book = new ReviewBookDTO()
+            if(book is not null)
             {
-                Id = book.Id,
-                Title = book.Title,
-                Description = book.Description,
-                Published_at = book.Published_at,
-            };
-
+                result.Book = new ReviewBookDTO()
+                {
+                    Id = book.Id,
+                    Title = book.Title,
+                    Description = book.Description,
+                    Published_at = book.Published_at,
+                };
+            }
+            
             return result;
         }
     }

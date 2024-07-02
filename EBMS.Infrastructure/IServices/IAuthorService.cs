@@ -1,4 +1,5 @@
 ﻿using EBMS.Infrastructure.DTOs.Author;
+using EBMS.Infrastructure.DTOs.Book;
 using EBMS.Infrastructure.Models;
 namespace EBMS.Infrastructure.IServices
 {

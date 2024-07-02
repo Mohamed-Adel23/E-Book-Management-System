@@ -11,5 +11,9 @@ namespace EBMS.Infrastructure.IServices
         Task<IEnumerable<ReviewDTO>> GetAllReviewsAsync();
         Task<ReviewDTO> UpdateAsync(int id, string curUserId, ReviewModel model);
         Task<bool> DeleteAsync(int id, string curUserId);
+
+        // Features
+        Task<IEnumerable<ReviewDTO>> GetBookReviewsAsync(int id);
+        Task<IEnumerable<ReviewDTO>> GetUserReviewsAsync(string userName);
     }
 }

@@ -1,5 +1,7 @@
 ﻿using EBMS.Infrastructure;
 using EBMS.Infrastructure.DTOs.Book;
+using EBMS.Infrastructure.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EBMS.API.Controllers
@@ -15,6 +17,7 @@ namespace EBMS.API.Controllers
             _unitOfWork = unitOfWork;
         }
 
+        [Authorize(Roles = $"{RolesConstants.SuperAdmin},{RolesConstants.Admin}")]
         [HttpPost(Name = "createBook")]
         public async Task<IActionResult> CreateBookAsync(BookModel model)
         {
@@ -57,6 +60,7 @@ namespace EBMS.API.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = $"{RolesConstants.SuperAdmin},{RolesConstants.Admin}")]
         [HttpPut("{id:int}", Name = "updateBook")]
         public async Task<IActionResult> UpdateBookAsync(int id, BookModel model)
         {
@@ -75,6 +79,7 @@ namespace EBMS.API.Controllers
         }
 
         // This Action can be accessed only by Super Admin, because of its sensitivity
+        [Authorize(Roles = $"{RolesConstants.SuperAdmin}")]
         [HttpDelete("{id:int}", Name = "deleteBook")]
         public async Task<IActionResult> DeleteBookAsync(int id)
         {
@@ -87,6 +92,35 @@ namespace EBMS.API.Controllers
             await _unitOfWork.CompleteAsync();
 
             return NoContent();
+        }
+
+        // Features
+        [HttpGet("Author/{id:int}", Name = "getAuthorBooks")]
+        public async Task<IActionResult> GetAuthorBooksAsync(int id)
+        {
+            var result = await _unitOfWork.Books.GetAuthorBooksAsync(id);
+
+            if (result is null)
+                return NotFound("Author is not found!");
+
+            if(result.Count() <= 0)
+                return NotFound("Author doesn't have any book yet!");
+
+            return Ok(result);
+        }
+
+        [HttpGet("Category/{id:int}", Name = "getCategoryBooks")]
+        public async Task<IActionResult> GetCategoryBooksAsync(int id)
+        {
+            var result = await _unitOfWork.Books.GetCategoryBooksAsync(id);
+
+            if (result is null)
+                return NotFound("category is not found!");
+
+            if (result.Count() <= 0)
+                return NotFound("Category doesn't have any book yet!");
+
+            return Ok(result);
         }
     }
 }

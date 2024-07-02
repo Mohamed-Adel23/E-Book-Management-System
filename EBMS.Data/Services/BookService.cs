@@ -2,7 +2,7 @@
 using EBMS.Infrastructure.DTOs.Author;
 using EBMS.Infrastructure.DTOs.Book;
 using EBMS.Infrastructure.DTOs.Category;
-using EBMS.Infrastructure.IServices.IAuth;
+using EBMS.Infrastructure.IServices;
 using EBMS.Infrastructure.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -316,8 +316,44 @@ namespace EBMS.Data.Services
             return true;
         }
 
+        // Features
+        public async Task<IEnumerable<BookDTO>> GetAuthorBooksAsync(int id)
+        {
+            var result = new List<BookDTO>();
+            // Check if the Author Id is valid 
+            var author = await _context.Authors.FindAsync(id);
+            if (author is null)
+                return null!;
+            // Get All Books for this Author
+            var books = _context.Books.Where(x => x.AuthorId == id);
 
-        private async Task<BookDTO> BookDataDTO(Book model)
+            foreach (var book in books)
+                result.Add(await BookDataDTO(book, true));
+
+            return result;
+        }
+
+        public async Task<IEnumerable<BookDTO>> GetCategoryBooksAsync(int id)
+        {
+            var result = new List<BookDTO>();
+            // Check if the Category Id is valid 
+            var cat = await _context.Categories.FindAsync(id);
+            if (cat is null)
+                return null!;
+            // Get All Books for this Category
+            // --> This will get all the ids of related books and
+            //     under the hood make join with book table to get book data 
+            var bookCats = _context.BookCategories.Include(x => x.Book).Where(x => x.CategoryId == id);
+
+            foreach (var book in bookCats)
+                result.Add(await BookDataDTO(book.Book));
+
+            return result;
+        }
+
+
+
+        private async Task<BookDTO> BookDataDTO(Book model, bool isAuthor = false)
         {
             var result = new BookDTO();
 
@@ -335,17 +371,20 @@ namespace EBMS.Data.Services
             result.Updated_at = model.Updated_at;
 
             // Select The Author 
-            var author = await _context.Authors.FindAsync(model.AuthorId);
-            result.Author = new AuthorDTO()
+            if (!isAuthor)
             {
-                Id = author!.Id,
-                FullName = author?.FullName,
-                Bio = author?.Bio,
-                ProfilePic = author?.ProfilePic,
-                Created_at = author!.Created_at,
-                Updated_at = author?.Updated_at,
-            };
-
+                var author = await _context.Authors.FindAsync(model.AuthorId);
+                result.Author = new AuthorDTO()
+                {
+                    Id = author!.Id,
+                    FullName = author?.FullName,
+                    Bio = author?.Bio,
+                    ProfilePic = author?.ProfilePic,
+                    Created_at = author!.Created_at,
+                    Updated_at = author?.Updated_at,
+                };
+            }
+            
             // Select Categories
             var cats = await _context.Categories.ToListAsync();
             var catsBooks = _context.BookCategories.Where(x => x.BookId == model.Id).ToList();

@@ -48,6 +48,7 @@ namespace EBMS.API.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
         [HttpGet("getAll", Name = "getAllAuthors")]
         public async Task<IActionResult> GetAllAuthorsAsync()
         {

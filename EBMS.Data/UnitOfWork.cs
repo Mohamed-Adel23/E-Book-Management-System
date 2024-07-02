@@ -2,7 +2,6 @@
 using EBMS.Data.Services;
 using EBMS.Infrastructure;
 using EBMS.Infrastructure.IServices;
-using EBMS.Infrastructure.IServices.IAuth;
 using EBMS.Infrastructure.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -22,6 +21,7 @@ namespace EBMS.Data
         public IAuthorService Authors { get; private set; }
         public IBookService Books { get; private set; }
         public IReviewService Reviews { get; private set; }
+        public IWishlistService Wishlists { get; private set; }
 
         // Inject The Context and Initialize The Services (Repositories)
         public UnitOfWork(BookDbContext context, IWebHostEnvironment webHostEnvironment, UserManager<BookUser> userManager)
@@ -33,6 +33,7 @@ namespace EBMS.Data
             Authors = new AuthorService(_context);
             Books = new BookService(_context, _webHostEnvironment);
             Reviews = new ReviewService(_context, _userManager);
+            Wishlists = new WishlistService(_context, _userManager);
         }
 
         // Save Changes into Database with UoW, returns number of affected rows
