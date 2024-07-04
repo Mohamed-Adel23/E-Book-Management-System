@@ -2,10 +2,13 @@
 using EBMS.Infrastructure.DTOs.Author;
 using EBMS.Infrastructure.DTOs.Book;
 using EBMS.Infrastructure.DTOs.Category;
+using EBMS.Infrastructure.Helpers;
 using EBMS.Infrastructure.IServices;
 using EBMS.Infrastructure.Models;
+using EBMS.Infrastructure.Queries;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace EBMS.Data.Services
 {
@@ -351,7 +354,165 @@ namespace EBMS.Data.Services
             return result;
         }
 
+        public async Task<IEnumerable<BookDTO>> GetBooksByPublicationDateRangeAsync(string from, string to)
+        {
+            var result = new List<BookDTO>();
 
+            // Check if the date is valid
+            DateOnly fromDate;
+            DateOnly toDate;
+            if (!DateOnly.TryParse(from, out fromDate) || !DateOnly.TryParse(to, out toDate))
+                return null!;
+
+            if (fromDate > toDate)
+                return null!;
+
+            var books = _context.Books.Where(x => x.Published_at >= fromDate && x.Published_at <= toDate);
+
+            if(books.Count() <= 0)
+                return null!;
+
+            foreach (var book in books)
+                result.Add(await BookDataDTO(book));
+
+            return result;
+        }
+
+        public async Task<IEnumerable<BookDTO>> GetBooksByRateAsync(decimal rate)
+        {
+            var result = new List<BookDTO>();
+
+            var books = await _context.Books.Include(x => x.Reviews).ToListAsync();
+
+            foreach(var book in books)
+            {
+                decimal avgRate = 0m;
+                // Calculate The AVG Rate for each book
+                foreach(var review in book.Reviews!)
+                    avgRate += review.Rate;
+                avgRate = avgRate / (book.Reviews.Count() == 0 ? 1 : book.Reviews.Count());
+
+                if(avgRate >= rate)
+                    result.Add(await BookDataDTO(book));
+            }
+
+            if (result.Count() <= 0)
+                return null!;
+
+            return result;
+        }
+
+        // Big Search
+        public async Task<IEnumerable<BookDTO>> SearchAsync(string query)
+        {
+            var result = new List<BookDTO>();
+
+            // HashSet to prevent book duplications
+            HashSet<int> bookIds = new HashSet<int>();
+            // Search By LIKE Clause
+            // By Title
+            var booksByTitle = _context.Books.FromSql($"SELECT * FROM Books WHERE Title LIKE '%'+{query}+'%'");
+            foreach (var book in booksByTitle)
+            {
+                bookIds.Add(book.Id);
+                result.Add(await BookDataDTO(book));
+            }
+
+            // By Description
+            var booksByDesc = _context.Books.FromSql($"SELECT * FROM Books WHERE Description LIKE '%'+{query}+'%'");
+            foreach (var book in booksByDesc)
+            {
+                if (!bookIds.Contains(book.Id))
+                {
+                    bookIds.Add(book.Id);
+                    result.Add(await BookDataDTO(book));
+                }
+            }
+
+            // By Category
+            var cats = _context.Categories.FromSql($"SELECT * FROM Categories WHERE Title LIKE '%'+{query}+'%'").Include(x => x.BookCategories);
+            var books = _context.Books.ToList();
+            foreach (var cat in cats)
+            {
+                foreach (var bc in cat.BookCategories!)
+                {
+                    if (!bookIds.Contains(bc.BookId))
+                    {
+                        bookIds.Add(bc.BookId);
+                        result.Add(await BookDataDTO(await _context.Books.FindAsync(bc.BookId)));
+                    }
+                }
+            }
+
+            // By Author
+            var booksByAuthor = _context.Authors.FromSql($"SELECT * FROM Authors WHERE FullName LIKE '%'+{query}+'%'").Include(x => x.Books);
+            foreach (var author in booksByAuthor)
+            {
+                foreach (var book in author.Books)
+                {
+                    if (!bookIds.Contains(book.Id))
+                    {
+                        bookIds.Add(book.Id);
+                        result.Add(await BookDataDTO(book));
+                    }
+                }
+            }
+
+            if (result.Count() <= 0)
+                return null!;
+
+            return result;
+        }
+
+        // Searching, Sorting, Pagination
+        public async Task<PagedList<BookDTO>> FilterBooksAsync(GetBookQueries request)
+        {
+            var result = new List<BookDTO>();
+            IQueryable<Book> books = _context.Books;
+
+            // Search for relevant books by Title and description
+            if(request.query is not null)
+                books = books.Where(x => x.Title.Contains(request.query) || x.Description!.Contains(request.query));
+
+            // Sort By Column (Recommended to add Indexes to these columns)
+            if(request.sortColumn is not null && request.sortOrder?.ToLowerInvariant() == "desc")
+            {
+                books = books.OrderByDescending(GetSortProperty(request.sortColumn));
+            }
+            else if(request.sortColumn is not null)
+            {
+                books = books.OrderBy(GetSortProperty(request.sortColumn));
+            }
+
+            if (books.Count() <= 0)
+                return null!;
+
+            // Apply Pagination with Skip and Take
+            //books = books.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize);
+
+            foreach (var book in books)
+                result.Add(await BookDataDTO(book));
+
+            // Wrapping The Pagination and give more information
+            var pagination = PagedList<BookDTO>.Pagination(result, request.Page, request.PageSize);
+
+            return pagination;
+        }
+
+
+
+        // Get Sort property To pass to OrderBy
+        private Expression<Func<Book, Object>> GetSortProperty(string sortColumn) =>
+            sortColumn.ToLowerInvariant() switch 
+            {
+                "title" => book => book.Title,
+                "pprice" => book => book.PhysicalPrice,
+                "rprice" => book => book.DownloadPrice,
+                "discount" => book => book.Discount,
+                "quantity" => book => book.AvailableQuantity,
+                "pupdate" => book => book.Published_at,
+                _ => book => book.Id
+            };
 
         private async Task<BookDTO> BookDataDTO(Book model, bool isAuthor = false)
         {
@@ -369,6 +530,14 @@ namespace EBMS.Data.Services
             result.BookCoverImage = model.BookCoverImage;
             result.Created_at = model.Created_at;
             result.Updated_at = model.Updated_at;
+
+            // Get The Rate
+            IQueryable<Review> bookReviews = _context.Reviews.Where(x => x.BookId == model.Id);
+            decimal avgRate = 0m;
+            foreach (var review in bookReviews)
+                avgRate += review.Rate;
+
+            result.Rate = avgRate/(bookReviews.Count() == 0? 1 : bookReviews.Count());
 
             // Select The Author 
             if (!isAuthor)

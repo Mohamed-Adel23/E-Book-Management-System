@@ -17,6 +17,8 @@ namespace EBMS.Infrastructure.DTOs.Book
 
         public int AvailableQuantity { get; set; }
 
+        public decimal Rate { get; set; }
+
         public string? BookFilePath { get; set; }
 
         public string? BookCoverImage { get; set; }

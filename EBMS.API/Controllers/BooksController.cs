@@ -1,6 +1,7 @@
 ﻿using EBMS.Infrastructure;
 using EBMS.Infrastructure.DTOs.Book;
-using EBMS.Infrastructure.Helpers;
+using EBMS.Infrastructure.Helpers.Constants;
+using EBMS.Infrastructure.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -119,6 +120,58 @@ namespace EBMS.API.Controllers
 
             if (result.Count() <= 0)
                 return NotFound("Category doesn't have any book yet!");
+
+            return Ok(result);
+        }
+
+        [HttpGet("Date", Name = "getBooksByPublicationDate")]
+        public async Task<IActionResult> GetBooksByPublicationDateRangeAsync([FromQuery]string from, [FromQuery]string to)
+        {
+            var result = await _unitOfWork.Books.GetBooksByPublicationDateRangeAsync(from, to);
+
+            if (result is null)
+                return BadRequest("Something went wrong!");
+
+            return Ok(result);
+        }
+
+        [HttpGet("Rate", Name = "getBooksByRate")]
+        public async Task<IActionResult> GetBooksByRateAsync([FromQuery]decimal minrate)
+        {
+            var result = await _unitOfWork.Books.GetBooksByRateAsync(minrate);
+
+            if (result is null)
+                return BadRequest("Somthing went wrong!");
+
+            return Ok(result);
+        }
+
+        [HttpGet("Search", Name = "search")]
+        public async Task<IActionResult> SearchAsync([FromQuery]string query)
+        {
+            var result = await _unitOfWork.Books.SearchAsync(query);
+
+            if (result is null)
+                return BadRequest("Something went wrong!");
+
+            return Ok(result);
+        }
+
+        // Searching, Sorting, Pagination
+        [HttpGet(Name = "filerBooks")]
+        public async Task<IActionResult> FilterBooksAsync(
+            string? searchTerm,
+            string? sortColumn,
+            string? sortOrder,
+            int page,
+            int pageSize
+            )
+        {
+            var query = new GetBookQueries(searchTerm, sortColumn, sortOrder, page, pageSize);
+            var result = await _unitOfWork.Books.FilterBooksAsync(query);
+
+            if (result is null)
+                return BadRequest("There is no Books!");
 
             return Ok(result);
         }

@@ -1,6 +1,6 @@
 ﻿using EBMS.Infrastructure;
 using EBMS.Infrastructure.DTOs.Category;
-using EBMS.Infrastructure.Helpers;
+using EBMS.Infrastructure.Helpers.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

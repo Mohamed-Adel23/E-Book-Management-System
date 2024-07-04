@@ -1,6 +1,6 @@
 ﻿using EBMS.Data.DataAccess;
 using EBMS.Infrastructure.DTOs.Review;
-using EBMS.Infrastructure.Helpers;
+using EBMS.Infrastructure.Helpers.Constants;
 using EBMS.Infrastructure.IServices;
 using EBMS.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;

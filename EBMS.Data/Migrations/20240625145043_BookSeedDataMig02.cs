@@ -1,4 +1,4 @@
-﻿using EBMS.Infrastructure.Helpers;
+﻿using EBMS.Infrastructure.Helpers.Constants;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable

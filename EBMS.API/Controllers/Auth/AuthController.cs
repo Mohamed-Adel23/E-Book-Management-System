@@ -1,5 +1,5 @@
 ﻿using EBMS.Infrastructure.DTOs.Auth;
-using EBMS.Infrastructure.Helpers;
+using EBMS.Infrastructure.Helpers.Constants;
 using EBMS.Infrastructure.IServices.IAuth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
