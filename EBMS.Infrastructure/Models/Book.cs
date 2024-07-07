@@ -6,7 +6,6 @@
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public decimal PhysicalPrice { get; set; }
-        public decimal DownloadPrice { get; set; }
         public decimal Discount { get; set; }
         public int AvailableQuantity { get; set; }
         public string BookFilePath { get; set; } = null!;
@@ -32,8 +31,8 @@
         // Has Many Orders
         public ICollection<Order>? Orders { get; set; } = new List<Order>();
 
-        // ---> M Users can purchase N Paid Download Books <---
-        // Has Many Paid downloads
+        // ---> M Users can Download N Books <---
+        // Has Many downloads
         public ICollection<BookDownload>? BookDownloads { get; set; } = new List<BookDownload>();
         // Has Many Users
         public ICollection<BookUser>? BookUsers { get; set; } = new List<BookUser>();

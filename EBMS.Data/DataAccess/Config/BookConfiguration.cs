@@ -23,10 +23,6 @@ namespace EBMS.Data.DataAccess.Config
                    .HasColumnType("DECIMAL")
                    .HasPrecision(7, 2)
                    .IsRequired();
-            builder.Property(x => x.DownloadPrice)
-                   .HasColumnType("DECIMAL")
-                   .HasPrecision(7, 2)
-                   .IsRequired();
             builder.Property(x => x.Discount)
                    .HasColumnType("DECIMAL")
                    .HasPrecision(5, 2)

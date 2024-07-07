@@ -17,8 +17,8 @@ namespace EBMS.Infrastructure.Models
         // Has Many Orders
         public ICollection<Order>? Orders { get; set; } = new List<Order>();
         
-        // ---> M Users can purchase N Paid Download Books <---
-        // Has Many Paid downloads
+        // ---> M Users can Download N Books <---
+        // Has Many Book downloads
         public ICollection<BookDownload>? BookDownloads { get; set; } = new List<BookDownload>();
         // Has Many Books
         public ICollection<Book>? Books { get; set; } = new List<Book>();

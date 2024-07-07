@@ -18,7 +18,5 @@ namespace EBMS.Infrastructure.DTOs.Auth
         public IFormFile? ProfilePic { get; set; }
         [DataType(DataType.Password)]
         public string Password { get; set; } = null!;
-        [Required]
-        public string Role { get; set; } = null!;
     }
 }

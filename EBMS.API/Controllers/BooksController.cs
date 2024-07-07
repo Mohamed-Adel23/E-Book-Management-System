@@ -4,6 +4,7 @@ using EBMS.Infrastructure.Helpers.Constants;
 using EBMS.Infrastructure.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EBMS.API.Controllers
 {
@@ -93,6 +94,24 @@ namespace EBMS.API.Controllers
             await _unitOfWork.CompleteAsync();
 
             return NoContent();
+        }
+
+        [Authorize]
+        [HttpGet("download/{id:int}", Name = "downloadBook")]
+        public async Task<IActionResult> DownloadAsync(int id)
+        {
+            // Current Authenticated User
+            var curUserId = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            var result = await _unitOfWork.Books.DownloadAsync(curUserId!, id);
+
+            if (!string.IsNullOrEmpty(result.Message))
+                return BadRequest(new { result.Message });
+
+            // Save Changes To Database
+            await _unitOfWork.CompleteAsync();
+
+            return File(result.MemoryDataStream, result.ContentType, result.FileName);
         }
 
         // Features

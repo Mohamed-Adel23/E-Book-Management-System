@@ -11,8 +11,6 @@ namespace EBMS.Infrastructure.DTOs.Book
 
         public decimal PhysicalPrice { get; set; }
 
-        public decimal DownloadPrice { get; set; }
-
         public decimal Discount { get; set; }
 
         public int AvailableQuantity { get; set; }

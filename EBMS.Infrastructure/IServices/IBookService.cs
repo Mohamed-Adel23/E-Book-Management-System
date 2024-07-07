@@ -12,6 +12,7 @@ namespace EBMS.Infrastructure.IServices
         Task<IEnumerable<BookDTO>> GetAllBooksAsync();
         Task<BookDTO> UpdateAsync(int id, BookModel model);
         Task<bool> DeleteAsync(int id);
+        Task<DownloadFile> DownloadAsync(string curUserId, int id);
 
         // Features
         Task<IEnumerable<BookDTO>> GetAuthorBooksAsync(int id);

@@ -15,9 +15,6 @@ namespace EBMS.Infrastructure.DTOs.Book
         [Range(10, (double)100000m, ErrorMessage = "Physical price must be a positive value in range (10, 100000)")]
         public decimal PhysicalPrice { get; set; }
         
-        [Range(10, (double)100000m, ErrorMessage = "Physical price must be a positive value in range (10, 100000)")]
-        public decimal DownloadPrice { get; set; }
-        
         public decimal Discount { get; set; }
         
         [Range(0, int.MaxValue, ErrorMessage = "Available quantity must be a positive value")]
