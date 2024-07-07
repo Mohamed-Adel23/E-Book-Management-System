@@ -89,10 +89,6 @@ namespace EBMS.Data.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("DECIMAL");
 
-                    b.Property<decimal>("DownloadPrice")
-                        .HasPrecision(7, 2)
-                        .HasColumnType("DECIMAL");
-
                     b.Property<decimal>("PhysicalPrice")
                         .HasPrecision(7, 2)
                         .HasColumnType("DECIMAL");
@@ -138,17 +134,8 @@ namespace EBMS.Data.Migrations
                     b.Property<string>("BookUserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<decimal>("CurrentPrice")
-                        .HasPrecision(7, 2)
-                        .HasColumnType("DECIMAL");
-
                     b.Property<DateTime>("Downloaded_at")
                         .HasColumnType("DATETIME");
-
-                    b.Property<bool>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("BIT")
-                        .HasDefaultValue(false);
 
                     b.HasKey("BookId", "BookUserId");
 
@@ -335,6 +322,56 @@ namespace EBMS.Data.Migrations
                     b.ToTable("Orders", (string)null);
                 });
 
+            modelBuilder.Entity("EBMS.Infrastructure.Models.PaymentInfo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("DECIMAL");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("NVARCHAR");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("VARCHAR");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Paid_at")
+                        .HasColumnType("DATETIME");
+
+                    b.Property<string>("PayerId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("NVARCHAR");
+
+                    b.Property<string>("PaymentId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("NVARCHAR");
+
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
+                        .HasColumnType("VARCHAR");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.ToTable("PaymentInfo", (string)null);
+                });
+
             modelBuilder.Entity("EBMS.Infrastructure.Models.Review", b =>
                 {
                     b.Property<int>("Id")
@@ -347,6 +384,7 @@ namespace EBMS.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Comment")
+                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("NVARCHAR");
 
@@ -374,25 +412,16 @@ namespace EBMS.Data.Migrations
 
             modelBuilder.Entity("EBMS.Infrastructure.Models.Wishlist", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
                     b.Property<int>("BookId")
                         .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("Created_at")
                         .HasColumnType("DATETIME");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BookId");
+                    b.HasKey("BookId", "UserId");
 
                     b.HasIndex("UserId");
 
@@ -648,6 +677,17 @@ namespace EBMS.Data.Migrations
                     b.Navigation("BookUser");
                 });
 
+            modelBuilder.Entity("EBMS.Infrastructure.Models.PaymentInfo", b =>
+                {
+                    b.HasOne("EBMS.Infrastructure.Models.Order", "Order")
+                        .WithOne("PaymentInfo")
+                        .HasForeignKey("EBMS.Infrastructure.Models.PaymentInfo", "OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("EBMS.Infrastructure.Models.Review", b =>
                 {
                     b.HasOne("EBMS.Infrastructure.Models.Book", "Book")
@@ -774,6 +814,8 @@ namespace EBMS.Data.Migrations
             modelBuilder.Entity("EBMS.Infrastructure.Models.Order", b =>
                 {
                     b.Navigation("BookOrders");
+
+                    b.Navigation("PaymentInfo");
                 });
 #pragma warning restore 612, 618
         }

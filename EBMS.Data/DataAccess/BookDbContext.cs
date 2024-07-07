@@ -18,6 +18,7 @@ namespace EBMS.Data.DataAccess
         public DbSet<BookCategory> BookCategories { get; set; }
         public DbSet<BookOrder> BookOrders { get; set; }
         public DbSet<BookDownload> BookDownloads { get; set; }
+        public DbSet<PaymentInfo> PaymentInfo { get; set; }
 
         // Models Configurations
         protected override void OnModelCreating(ModelBuilder builder)

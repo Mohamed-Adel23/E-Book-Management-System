@@ -2,7 +2,6 @@
 {
     public class Wishlist
     {
-        public int Id { get; set; }
         public DateTime Created_at { get; set; }
         // Has One User
         public string UserId { get; set; } = null!;

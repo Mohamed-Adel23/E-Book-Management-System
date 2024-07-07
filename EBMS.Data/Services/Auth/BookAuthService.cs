@@ -92,19 +92,11 @@ namespace EBMS.Data.Services.Auth
                 return authModel;
             }
 
-            // Add The User to a role based on the role sent in the request body
-            var roles = new List<string>();
-
             // One User will be SuperAdmin
-            //if (model.Role.ToLowerInvariant() == RolesConstants.SuperAdmin.ToLowerInvariant())
-            //    roles.Add(RolesConstants.SuperAdmin);
-
-            if (model.Role.ToLowerInvariant() == RolesConstants.Admin.ToLowerInvariant())
-                roles.Add(RolesConstants.Admin);
+            //result = await _userManager.AddToRoleAsync(newUser, RolesConstants.SuperAdmin);
 
             // By Default every User in the system is a Reader
-            roles.Add(RolesConstants.Reader);
-            result = await _userManager.AddToRolesAsync(newUser, roles);
+            result = await _userManager.AddToRoleAsync(newUser, RolesConstants.Reader);
             if (!result.Succeeded)
             {
                 // Store The Errors Found
@@ -123,7 +115,7 @@ namespace EBMS.Data.Services.Auth
             authModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtToken);
             authModel.UserName = newUser.UserName;
             authModel.Email = newUser.Email;
-            authModel.Roles = roles;
+            authModel.Roles = new List<string>() { RolesConstants.Reader };
             authModel.IsAuthenticated = true;
             authModel.Expires_at = jwtToken.ValidTo;
             authModel.RefreshToken = refreshToken.Token;

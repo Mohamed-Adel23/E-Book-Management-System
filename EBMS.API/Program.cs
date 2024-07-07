@@ -58,6 +58,14 @@ namespace EBMS.API
             });
             // Register Unit Of Work
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            // Add Memory Cache
+            builder.Services.AddDistributedMemoryCache();
+            // Add Session To Pipeline
+            builder.Services.AddSession(op =>
+            {
+                op.IdleTimeout = TimeSpan.FromMinutes(20);
+            });
+
 
 
             builder.Services.AddControllers();
@@ -95,7 +103,11 @@ namespace EBMS.API
                 app.UseSwaggerUI();
             }
 
+            app.UseStaticFiles();
+
             app.UseHttpsRedirection();
+
+            app.UseSession();
 
             // User authenticated, then authorized
             app.UseAuthentication();

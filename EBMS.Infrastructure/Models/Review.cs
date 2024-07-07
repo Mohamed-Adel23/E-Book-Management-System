@@ -4,7 +4,7 @@
     {
         public int Id { get; set; }
         public int Rate { get; set; }
-        public string? Comment { get; set; }
+        public string Comment { get; set; } = null!;
         public DateTime Created_at { get; set; }
         public DateTime? Updated_at { get; set; }
         // Has One User

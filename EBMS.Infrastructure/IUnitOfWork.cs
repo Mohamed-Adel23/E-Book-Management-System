@@ -1,4 +1,5 @@
 ﻿using EBMS.Infrastructure.IServices;
+using EBMS.Infrastructure.IServices.IPayment;
 
 namespace EBMS.Infrastructure
 {
@@ -10,6 +11,8 @@ namespace EBMS.Infrastructure
         IBookService Books { get; }
         IReviewService Reviews { get; }
         IWishlistService Wishlists { get; }
+        IOrderService Orders { get; }
+        IPaypalService PayWithPaypal { get; }
 
         Task<int> CompleteAsync();
     }

@@ -8,9 +8,7 @@ namespace EBMS.Data.DataAccess.Config
         public void Configure(EntityTypeBuilder<Wishlist> builder)
         {
             builder.ToTable("Wishlists");
-            builder.HasKey(x => x.Id);
-            builder.Property(x => x.Id)
-                   .ValueGeneratedOnAdd();
+            builder.HasKey(x => new { x.BookId, x.UserId });
             builder.Property(x => x.Created_at)
                    .HasColumnType("DATETIME")
                    .IsRequired();

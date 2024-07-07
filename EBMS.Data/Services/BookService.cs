@@ -7,6 +7,7 @@ using EBMS.Infrastructure.IServices;
 using EBMS.Infrastructure.Models;
 using EBMS.Infrastructure.Queries;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -14,16 +15,18 @@ namespace EBMS.Data.Services
 {
     public class BookService : BaseService<Book>, IBookService
     {
-        private string[] _allowedFileExtensions =  { ".pdf",".txt",".epub",".doc",".docs" };
+        private string[] _allowedFileExtensions =  { ".pdf",".txt", ".doc",".docx" };
         private int _maxFileSize = 1 * 1024 * 1024 * 1024; // 1 GB
         private string[] _allowedImageExtensions = { ".jpg", ".png", ".jpeg" };
         private int _maxImageSize = 3 * 1024 * 1024; // 3 MB
 
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly UserManager<BookUser> _userManager;
 
-        public BookService(BookDbContext context, IWebHostEnvironment webHostEnvironment) : base(context)
+        public BookService(BookDbContext context, IWebHostEnvironment webHostEnvironment, UserManager<BookUser> userManager) : base(context)
         {
             _webHostEnvironment = webHostEnvironment;
+            _userManager = userManager;
         }
 
         public async Task<BookDTO> CreateAsync(BookModel model)
@@ -102,7 +105,6 @@ namespace EBMS.Data.Services
                 Title = model.Title,
                 Description = model.Description,
                 PhysicalPrice = model.PhysicalPrice,
-                DownloadPrice = model.DownloadPrice,
                 Discount = model.Discount,
                 AvailableQuantity = model.AvailableQuantity,
                 Published_at = model.Published_at,
@@ -262,7 +264,6 @@ namespace EBMS.Data.Services
             book.Title = model.Title;
             book.Description = model.Description;
             book.PhysicalPrice = model.PhysicalPrice;
-            book.DownloadPrice = model.DownloadPrice;
             book.Discount = model.Discount;
             book.AvailableQuantity = model.AvailableQuantity;
             book.Published_at = model.Published_at;
@@ -317,6 +318,56 @@ namespace EBMS.Data.Services
             _context.Books.Remove(book);
 
             return true;
+        }
+
+        public async Task<DownloadFile> DownloadAsync(string curUserId, int id)
+        {
+            var result = new DownloadFile();
+
+            var book = await GetByIdAsync(id);
+            // Check if the Book Id is valid
+            if (book is null)
+            {
+                result.Message = "Book is not found!";
+                return result;
+            }
+            // Check if the user Id is valid
+            var user = await _userManager.FindByIdAsync(curUserId);
+            if (user is null)
+            {
+                result.Message = "User is not found!";
+                return result;
+            }
+            // Check if the user download this book more than twice
+            var downloads = _context.BookDownloads.Where(x => x.BookUserId == curUserId && x.BookId == id).ToList();
+            if (downloads.Count() >= 1)
+            {
+                result.Message = "You exceeded the number of allowed downloads for this book!";
+                return result;
+            }
+            // Store New User Download for this book
+            var newDownload = new BookDownload()
+            {
+                BookId = id,
+                BookUserId = curUserId,
+                Downloaded_at = DateTime.Now,
+            };
+            // Save To Memory
+            await _context.BookDownloads.AddAsync(newDownload);
+
+            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "Book\\Files", book.BookFilePath);
+            MemoryStream memoryStream = new();
+            using var fileStream = new FileStream(filePath, FileMode.Open);
+            await fileStream.CopyToAsync(memoryStream);
+
+            memoryStream.Position = 0;
+
+            var fileExtension = Path.GetExtension(filePath).ToLowerInvariant();
+            result.FileName = filePath;
+            result.MemoryDataStream = memoryStream;
+            result.ContentType = GetContentType(fileExtension);
+
+            return result;
         }
 
         // Features
@@ -507,7 +558,6 @@ namespace EBMS.Data.Services
             {
                 "title" => book => book.Title,
                 "pprice" => book => book.PhysicalPrice,
-                "rprice" => book => book.DownloadPrice,
                 "discount" => book => book.Discount,
                 "quantity" => book => book.AvailableQuantity,
                 "pupdate" => book => book.Published_at,
@@ -522,7 +572,6 @@ namespace EBMS.Data.Services
             result.Title = model.Title;
             result.Description = model.Description;
             result.PhysicalPrice = model.PhysicalPrice;
-            result.DownloadPrice = model.DownloadPrice;
             result.Discount = model.Discount;
             result.AvailableQuantity = model.AvailableQuantity;
             result.Published_at = model.Published_at;
@@ -573,5 +622,15 @@ namespace EBMS.Data.Services
 
             return result;
         }
+
+        private string GetContentType(string fileExt) =>
+            fileExt switch
+            {
+                ".pdf" => "application/pdf",
+                ".txt" => "text/plain",
+                ".doc" => "application/vnd.ms-word",
+                "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                _ => "application/octet-stream"
+            };
     }
 }
