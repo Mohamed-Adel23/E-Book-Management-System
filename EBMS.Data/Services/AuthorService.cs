@@ -1,15 +1,19 @@
 ﻿using EBMS.Data.DataAccess;
 using EBMS.Infrastructure.DTOs.Author;
-using EBMS.Infrastructure.DTOs.Book;
 using EBMS.Infrastructure.IServices;
+using EBMS.Infrastructure.IServices.ICache;
 using EBMS.Infrastructure.Models;
 
 namespace EBMS.Data.Services
 {
     public class AuthorService : BaseService<Author>, IAuthorService
     {
+        private readonly ICacheService _cacheService;
         // Inject The Context
-        public AuthorService(BookDbContext context) : base(context) { }
+        public AuthorService(BookDbContext context, ICacheService cacheService) : base(context)
+        {
+            _cacheService = cacheService;
+        }
 
         public async Task<AuthorDTO> CreateAsync(AuthorModel model)
         {
@@ -72,8 +76,21 @@ namespace EBMS.Data.Services
         public async Task<IEnumerable<AuthorDTO>> GetAllAuthorsAsync()
         {
             var result = new List<AuthorDTO>();
-            var authors = await GetAllAsync();
-            
+
+            IEnumerable<Author> authors;
+            // First Check if the data in the cache
+            if (_cacheService.IsCached("Authors"))
+            {
+                authors = _cacheService.GetData<IEnumerable<Author>>("Authors");
+            }
+            else
+            {
+                authors = await GetAllAsync();
+                // Set Data in the cache
+                var expirationTime = DateTime.Now.AddMinutes(20);
+                _cacheService.SetData("Authors", authors, expirationTime);
+            }
+
             foreach (var author in authors)
                 result.Add(AuthorDataDTO(author));
 

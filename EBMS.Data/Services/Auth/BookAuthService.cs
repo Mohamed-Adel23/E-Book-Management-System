@@ -2,6 +2,7 @@
 using EBMS.Infrastructure.Helpers;
 using EBMS.Infrastructure.Helpers.Constants;
 using EBMS.Infrastructure.IServices.IAuth;
+using EBMS.Infrastructure.IServices.IFile;
 using EBMS.Infrastructure.Models;
 using EBMS.Infrastructure.Models.Auth;
 using Microsoft.AspNetCore.Identity;
@@ -19,12 +20,14 @@ namespace EBMS.Data.Services.Auth
         private readonly UserManager<BookUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly JWT _jwt;
+        private readonly IFileService _fileService;
 
-        public BookAuthService(UserManager<BookUser> userManager, RoleManager<IdentityRole> roleManager, IOptions<JWT> jwt)
+        public BookAuthService(UserManager<BookUser> userManager, RoleManager<IdentityRole> roleManager, IOptions<JWT> jwt, IFileService fileService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _jwt = jwt.Value;
+            _fileService = fileService;
         }
 
         public async Task<BookAuthModel> RegisterAsync(RegisterDTO model)
@@ -51,26 +54,13 @@ namespace EBMS.Data.Services.Auth
                 PhoneNumber = model.PhoneNumber,
                 Created_at = DateTime.Now
             };
+
             // Check if there is a profile picture
             if (model.ProfilePic is not null)
             {
-                // Check the allowed extensions
-                var allowedExtensions = new string[] { ".jpg", ".png", ".jpeg" };
-                var fileExtension = Path.GetExtension(model.ProfilePic.FileName).ToLowerInvariant();
-                if(!allowedExtensions.Contains(fileExtension))
-                {
-                    authModel.Message = $"Profile Image should have one of the following extensions {string.Join(",", allowedExtensions)}";
-                    return authModel;
-                }
-                var fileLength = 3 * 1024 * 1024;
-                if (model.ProfilePic.Length > fileLength)
-                {
-                    authModel.Message = $"File exceeds size limit: {fileLength/(1024*1024)}M, choose another one with less size!";
-                    return authModel;
-                }
-                using var dataStream = new MemoryStream();
-                await model.ProfilePic.CopyToAsync(dataStream);
-                newUser.ProfilePic = dataStream.ToArray();
+                var uploadImage = await _fileService.UploadFileAsBytesAsync(model.ProfilePic);
+
+                newUser.ProfilePic = uploadImage.MemoryStream!.ToArray();
             }
 
             // Add Refresh Token for the User
@@ -291,23 +281,9 @@ namespace EBMS.Data.Services.Auth
             // Check if there is a profile picture
             if (model.ProfilePic is not null)
             {
-                // Check the allowed extensions
-                var allowedExtensions = new string[] { ".jpg", ".png", ".jpeg" };
-                var fileExtension = Path.GetExtension(model.ProfilePic.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(fileExtension))
-                {
-                    userDTO.Message = $"Profile Image should have one of the following extensions {string.Join(",", allowedExtensions)}";
-                    return userDTO;
-                }
-                var fileLength = 3 * 1024 * 1024;
-                if (model.ProfilePic.Length > fileLength)
-                {
-                    userDTO.Message = $"File exceeds size limit: {fileLength / (1024 * 1024)}M, choose another one with less size!";
-                    return userDTO;
-                }
-                using var dataStream = new MemoryStream();
-                await model.ProfilePic.CopyToAsync(dataStream);
-                updatedUser.ProfilePic = dataStream.ToArray();
+                var uploadImage = await _fileService.UploadFileAsBytesAsync(model.ProfilePic);
+
+                updatedUser.ProfilePic = uploadImage.MemoryStream!.ToArray();
             }
 
             // Update Data in DB

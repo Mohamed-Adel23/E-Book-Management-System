@@ -1,6 +1,7 @@
 ﻿using EBMS.Data.DataAccess;
 using EBMS.Infrastructure.IServices;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace EBMS.Data.Services
 {
@@ -26,12 +27,54 @@ namespace EBMS.Data.Services
         }
 
         /// <summary>
+        /// Get The First Element By Specific condition
+        /// </summary>
+        /// <returns>An Object from entity that meets the condition</returns>
+        public T GetFirstByPredicate(Expression<Func<T, bool>> predicate, string[] includes = null!)
+        {
+            IQueryable<T> query = _context.Set<T>();
+            if (query == null)
+                return null!;
+
+            if(includes is not null)
+                foreach (var include in includes)
+                    query = query.Include(include);
+
+            return query.FirstOrDefault(predicate);
+        }
+
+        /// <summary>
+        /// Get All Elements By Specific condition
+        /// </summary>
+        /// <returns>The list of all objects that meet the condition</returns>
+        public IEnumerable<T> GetAllByPredicate(Expression<Func<T, bool>> predicate, string[] includes = null!)
+        {
+            IQueryable<T> query = _context.Set<T>();
+            if (query == null)
+                return null!;
+
+            if (includes is not null)
+                foreach (var include in includes)
+                    query = query.Include(include);
+
+            return query.Where(predicate);
+        }
+
+        /// <summary>
         /// Get All Entity Objects 
         /// </summary>
-        /// <returns></returns>
-        public async Task<IEnumerable<T>> GetAllAsync()
+        /// <returns>All Entity Objects </returns>
+        public async Task<IEnumerable<T>> GetAllAsync(string[] includes = null!)
         {
-            return await _context.Set<T>().ToListAsync();
+            IQueryable<T> query = _context.Set<T>();
+            if (query == null)
+                return null!;
+
+            if (includes is not null)
+                foreach (var include in includes)
+                    query = query.Include(include);
+
+            return await query.ToListAsync();
         }
     }
 }

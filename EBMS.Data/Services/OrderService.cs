@@ -4,7 +4,6 @@ using EBMS.Infrastructure.Helpers.Constants;
 using EBMS.Infrastructure.IServices;
 using EBMS.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace EBMS.Data.Services
 {
@@ -106,7 +105,9 @@ namespace EBMS.Data.Services
         {
             var result = new OrderDTO();
 
-            var order = await _context.Orders.Include(x => x.BookOrders).SingleOrDefaultAsync(x => x.Id == id);
+            string[] includes = { "BookOrders" };
+            //var order = await _context.Orders.Include(x => x.BookOrders).SingleOrDefaultAsync(x => x.Id == id);
+            var order = GetFirstByPredicate(x => x.Id == id, includes);
             // Check if the id is valid
             if (order is null)
             {
@@ -142,7 +143,9 @@ namespace EBMS.Data.Services
             if (user is null)
                 return null!;
 
-            var orders = _context.Orders.Include(x => x.BookOrders).Where(x => x.UserId == curUserId);
+            string[] includes = { "BookOrders" };
+            //var orders = _context.Orders.Include(x => x.BookOrders).Where(x => x.UserId == curUserId);
+            var orders = GetAllByPredicate(x => x.UserId == curUserId, includes);
             if (orders.Count() <= 0)
                 return null!;
 
@@ -152,16 +155,18 @@ namespace EBMS.Data.Services
             return result;
         }
 
-        // This Action can be accessed only for Admins and Super Admin
+        // This Action can be accessed only by Admins and Super Admin
         public async Task<IEnumerable<OrderDTO>> GetAllOrdersAsync()
         {
             var result = new List<OrderDTO>();
 
-            var orders = await _context.Orders.Include(x => x.BookOrders).ToListAsync();
+            string[] includes = { "BookOrders" };
+            //var orders = await _context.Orders.Include(x => x.BookOrders).ToListAsync();
+            var orders = await GetAllAsync(includes);
             if (orders.Count() <= 0)
                 return null!;
 
-            // Enhance the performance by memorize
+            // Enhance the performance by memorizing Usernames
             var userNames = new Dictionary<string, string>();
             foreach (var order in orders)
             {
@@ -182,8 +187,9 @@ namespace EBMS.Data.Services
             var result = new OrderDTO();
 
             // Check the order Id
-            var order = await _context.Orders.FindAsync(orderId);
-            if(order is null)
+            //var order = await _context.Orders.FindAsync(orderId);
+            var order = await GetByIdAsync(orderId);
+            if (order is null)
             {
                 result.Message = "Order is not found!";
                 return result;
@@ -288,7 +294,8 @@ namespace EBMS.Data.Services
         // The Owned User, Admin and Super Admin can access this method
         public async Task<bool> CancelOrderAsync(string curUserId, int id)
         {
-            var order = await _context.Orders.FindAsync(id);
+            //var order = await _context.Orders.FindAsync(id);
+            var order = await GetByIdAsync(id);
             // Check if the id is valid
             if (order is null)
                 return false;
@@ -314,7 +321,8 @@ namespace EBMS.Data.Services
         // The Owned User, Admin and Super Admin can access this method
         public async Task<bool> DeliveredOrderAsync(string curUserId, int id)
         {
-            var order = await _context.Orders.FindAsync(id);
+            //var order = await _context.Orders.FindAsync(id);
+            var order = await GetByIdAsync(id);
             // Check if the id is valid
             if (order is null)
                 return false;

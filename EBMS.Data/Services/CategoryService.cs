@@ -1,6 +1,7 @@
 ﻿using EBMS.Data.DataAccess;
 using EBMS.Infrastructure.DTOs.Category;
 using EBMS.Infrastructure.IServices;
+using EBMS.Infrastructure.IServices.ICache;
 using EBMS.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +9,11 @@ namespace EBMS.Data.Services
 {
     public class CategoryService : BaseService<Category>, ICategoryService
     {
-        public CategoryService(BookDbContext context) : base(context) { }
+        private readonly ICacheService _cacheService;
+        public CategoryService(BookDbContext context, ICacheService cacheService) : base(context)
+        {
+            _cacheService = cacheService;
+        }
 
 
         public async Task<CategoryDTO> CreateAsync(CategoryModel model)
@@ -58,7 +63,20 @@ namespace EBMS.Data.Services
         public async Task<IEnumerable<CategoryDTO>> GetAllCatAsync()
         {
             var result = new List<CategoryDTO>();
-            var cats = await GetAllAsync();
+
+            IEnumerable<Category> cats;
+            // First Check if the data in the cache
+            if (_cacheService.IsCached("Categories"))
+            {
+                cats = _cacheService.GetData<IEnumerable<Category>>("Categories");
+            }
+            else
+            {
+                cats = await GetAllAsync();
+                // Set Data in the cache
+                var expirationTime = DateTime.Now.AddMinutes(20);
+                _cacheService.SetData("Categories", cats, expirationTime);
+            }
 
             foreach(var cat in cats)
             {

@@ -4,9 +4,10 @@ using EBMS.Infrastructure.DTOs.Book;
 using EBMS.Infrastructure.DTOs.Category;
 using EBMS.Infrastructure.Helpers;
 using EBMS.Infrastructure.IServices;
+using EBMS.Infrastructure.IServices.ICache;
+using EBMS.Infrastructure.IServices.IFile;
 using EBMS.Infrastructure.Models;
 using EBMS.Infrastructure.Queries;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -15,18 +16,15 @@ namespace EBMS.Data.Services
 {
     public class BookService : BaseService<Book>, IBookService
     {
-        private string[] _allowedFileExtensions =  { ".pdf",".txt", ".doc",".docx" };
-        private int _maxFileSize = 1 * 1024 * 1024 * 1024; // 1 GB
-        private string[] _allowedImageExtensions = { ".jpg", ".png", ".jpeg" };
-        private int _maxImageSize = 3 * 1024 * 1024; // 3 MB
-
-        private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly UserManager<BookUser> _userManager;
+        private readonly ICacheService _cacheService;
+        private readonly IFileService _fileService;
 
-        public BookService(BookDbContext context, IWebHostEnvironment webHostEnvironment, UserManager<BookUser> userManager) : base(context)
+        public BookService(BookDbContext context, UserManager<BookUser> userManager, ICacheService cacheService, IFileService fileService) : base(context)
         {
-            _webHostEnvironment = webHostEnvironment;
             _userManager = userManager;
+            _cacheService = cacheService;
+            _fileService = fileService;
         }
 
         public async Task<BookDTO> CreateAsync(BookModel model)
@@ -50,6 +48,7 @@ namespace EBMS.Data.Services
                     return result;
                 }
             }
+
             // Upload Files
             if(model.BookFilePath is null || model.BookCoverImage is null)
             {
@@ -57,47 +56,19 @@ namespace EBMS.Data.Services
                 return result;
             }
             // 1- Book File
-            // Check The Extension 
-            var fileExtension = Path.GetExtension(model.BookFilePath.FileName).ToLowerInvariant();
-            if (!_allowedFileExtensions.Contains(fileExtension))
+            var uploadFileResult = await _fileService.UploadFileToServerAsync(model.BookFilePath, true, "Book\\Files");
+            if(!string.IsNullOrEmpty(uploadFileResult.Message))
             {
-                result.Message = $"Invalid Book File Extensuion, Allowed Ones are ({string.Join(",", _allowedFileExtensions)})";
+                result.Message = uploadFileResult.Message;
                 return result;
             }
-            // Check The Size 
-            if(model.BookFilePath.Length > _maxFileSize)
-            {
-                result.Message = $"File Size Exceeds The Size Limit, You should upload files with size less than or equal to {_maxFileSize / (1024 * 1024 * 1024)}GB";
-                return result;
-            }
-            var fileName = model.BookFilePath.FileName;
-            // Create New Fake Name for the file
-            fileName = $"{Guid.NewGuid().ToString().Substring(0, 15)}-EBMS{Path.GetExtension(fileName).ToLowerInvariant()}";
-            // Get The Actual Path to store on server
-            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "Book\\Files", fileName);
-            // Move The File
-            using var fileStream = new FileStream(filePath, FileMode.Create);
-            await model.BookFilePath.CopyToAsync(fileStream);
-
             // 2- Book Cover Image
-            var imageExtension = Path.GetExtension(model.BookCoverImage.FileName).ToLowerInvariant();
-            if (!_allowedImageExtensions.Contains(imageExtension))
+            var uploadImageResult = await _fileService.UploadFileToServerAsync(model.BookCoverImage, false, "Book\\CoverImages");
+            if (!string.IsNullOrEmpty(uploadImageResult.Message))
             {
-                result.Message = $"Invalid Book Cover Image Extensuion, Allowed Ones are ({string.Join(",", _allowedImageExtensions)})";
+                result.Message = uploadImageResult.Message;
                 return result;
             }
-            // Check The Size 
-            if (model.BookCoverImage.Length > _maxImageSize)
-            {
-                result.Message = $"Cover Image Size Exceeds The Size Limit, You should upload files with size less than or equal to {_maxImageSize / (1024 * 1024)}MB";
-                return result;
-            }
-            var imageName = model.BookCoverImage.FileName;
-            imageName = $"{Guid.NewGuid().ToString().Substring(0, 15)}-EBMS{Path.GetExtension(imageName).ToLowerInvariant()}";
-            var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "Book\\CoverImages", imageName);
-            // Move The Image
-            using var imageStream = new FileStream(imagePath, FileMode.Create);
-            await model.BookCoverImage.CopyToAsync(imageStream);
 
             // Create New Book
             var newBook = new Book()
@@ -108,8 +79,8 @@ namespace EBMS.Data.Services
                 Discount = model.Discount,
                 AvailableQuantity = model.AvailableQuantity,
                 Published_at = model.Published_at,
-                BookFilePath = fileName,
-                BookCoverImage = imageName,
+                BookFilePath = uploadFileResult.FileName!,
+                BookCoverImage = uploadImageResult.FileName!,
                 Created_at = DateTime.Now,
                 AuthorId = model.AuthorId
             };
@@ -158,7 +129,21 @@ namespace EBMS.Data.Services
         public async Task<IEnumerable<BookDTO>> GetAllBooksAsync()
         {
             var result = new List<BookDTO>();
-            var books = await GetAllAsync();
+
+            // First, Check if the data in the In-Memory Cache
+            IEnumerable<Book> books;
+            if (_cacheService.IsCached("Books"))
+            {
+                books = _cacheService.GetData<IEnumerable<Book>>("Books");
+            }
+            // Else we should aaccess the database and set the new data into cache
+            else
+            {
+                books = await GetAllAsync();
+                // set the books in the cache
+                DateTime expirationTime = DateTime.Now.AddMinutes(20);
+                _cacheService.SetData<IEnumerable<Book>>("Books", books, expirationTime);
+            }
 
             foreach (var book in books)
                 result.Add(await BookDataDTO(book));
@@ -199,65 +184,34 @@ namespace EBMS.Data.Services
             // 1- Book File
             if (model.BookFilePath is not null)
             {
-                // Check The Extension 
-                var fileExtension = Path.GetExtension(model.BookFilePath.FileName).ToLowerInvariant();
-                if (!_allowedFileExtensions.Contains(fileExtension))
+                // Upload New File
+                var uploadFileResult = await _fileService.UploadFileToServerAsync(model.BookFilePath, true, "Book\\Files");
+                if (!string.IsNullOrEmpty(uploadFileResult.Message))
                 {
-                    result.Message = $"Invalid Book File Extensuion, Allowed Ones are ({string.Join(",", _allowedFileExtensions)})";
+                    result.Message = uploadFileResult.Message;
                     return result;
                 }
-                // Check The Size 
-                if (model.BookFilePath.Length > _maxFileSize)
-                {
-                    result.Message = $"File Size Exceeds The Size Limit, You should upload files with size less than or equal to {_maxFileSize / (1024 * 1024 * 1024)}GB";
-                    return result;
-                }
-                // Remove the Old File From Server
-                var oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, "Book\\Files", book.BookFilePath);
-                Thread.Sleep(1000);
-                File.Delete(oldFilePath);
-
-                var fileName = model.BookFilePath.FileName;
-                // Create New Fake Name for the file
-                fileName = $"{Guid.NewGuid().ToString().Substring(0, 15)}-EBMS{Path.GetExtension(fileName).ToLowerInvariant()}";
-                // Get The Actual Path to store on server
-                var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "Book\\Files", fileName);
-                // Move The File
-                using var fileStream = new FileStream(filePath, FileMode.Create);
-                await model.BookFilePath.CopyToAsync(fileStream);
+                // Remove The Old One
+                _fileService.DeleteFileFromServer(book.BookFilePath, "Book\\Files");
 
                 // Update Book File
-                book.BookFilePath = fileName;
+                book.BookFilePath = uploadFileResult.FileName!;
             }
             // 2- Book Cover Image
             if (model.BookCoverImage is not null)
             {
-                var imageExtension = Path.GetExtension(model.BookCoverImage.FileName).ToLowerInvariant();
-                if (!_allowedImageExtensions.Contains(imageExtension))
+                // Upload New File
+                var uploadImageResult = await _fileService.UploadFileToServerAsync(model.BookCoverImage, false, "Book\\CoverImages");
+                if (!string.IsNullOrEmpty(uploadImageResult.Message))
                 {
-                    result.Message = $"Invalid Book Cover Image Extensuion, Allowed Ones are ({string.Join(",", _allowedImageExtensions)})";
+                    result.Message = uploadImageResult.Message;
                     return result;
                 }
-                // Check The Size 
-                if (model.BookCoverImage.Length > _maxImageSize)
-                {
-                    result.Message = $"Cover Image Size Exceeds The Size Limit, You should upload files with size less than or equal to {_maxImageSize / (1024 * 1024)}MB";
-                    return result;
-                }
-                // Remove the Old Cover Image From Server
-                var oldImagePath = Path.Combine(_webHostEnvironment.WebRootPath, "Book\\CoverImages", book.BookCoverImage);
-                Thread.Sleep(1000);
-                File.Delete(oldImagePath);
+                // Remove The Old One
+                _fileService.DeleteFileFromServer(book.BookCoverImage, "Book\\CoverImages");
 
-                var imageName = model.BookCoverImage.FileName;
-                imageName = $"{Guid.NewGuid().ToString().Substring(0, 15)}-EBMS{Path.GetExtension(imageName).ToLowerInvariant()}";
-                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, "Book\\CoverImages", imageName);
-                // Move The Image
-                using var imageStream = new FileStream(imagePath, FileMode.Create);
-                await model.BookCoverImage.CopyToAsync(imageStream);
-
-                // Update Book Cover Image
-                book.BookCoverImage = imageName;
+                // Update Book File
+                book.BookCoverImage = uploadImageResult.FileName!;
             }
 
             // Update Book Data
@@ -307,12 +261,8 @@ namespace EBMS.Data.Services
                 return false;
 
             // Remove Book Files
-            var oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, "Book\\Files", book.BookFilePath);
-            Thread.Sleep(1000);
-            File.Delete(oldFilePath);
-            var oldImagePath = Path.Combine(_webHostEnvironment.WebRootPath, "Book\\CoverImages", book.BookCoverImage);
-            Thread.Sleep(1000);
-            File.Delete(oldImagePath);
+            _fileService.DeleteFileFromServer(book.BookFilePath, "Book\\Files");
+            _fileService.DeleteFileFromServer(book.BookCoverImage, "Book\\CoverImages");
 
             // Remove Book From Memory
             _context.Books.Remove(book);
@@ -355,18 +305,11 @@ namespace EBMS.Data.Services
             // Save To Memory
             await _context.BookDownloads.AddAsync(newDownload);
 
-            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "Book\\Files", book.BookFilePath);
-            MemoryStream memoryStream = new();
-            using var fileStream = new FileStream(filePath, FileMode.Open);
-            await fileStream.CopyToAsync(memoryStream);
+            // Download Book File
+            var downloadFile = await _fileService.DownloadFileAsync(book.BookFilePath, "Book\\Files");
 
-            memoryStream.Position = 0;
-
-            var fileExtension = Path.GetExtension(filePath).ToLowerInvariant();
-            result.FileName = filePath;
-            result.MemoryDataStream = memoryStream;
-            result.ContentType = GetContentType(fileExtension);
-
+            result = downloadFile;
+            
             return result;
         }
 
@@ -379,7 +322,8 @@ namespace EBMS.Data.Services
             if (author is null)
                 return null!;
             // Get All Books for this Author
-            var books = _context.Books.Where(x => x.AuthorId == id);
+            //var books = _context.Books.Where(x => x.AuthorId == id);
+            var books = GetAllByPredicate(x => x.AuthorId == id);
 
             foreach (var book in books)
                 result.Add(await BookDataDTO(book, true));
@@ -418,9 +362,10 @@ namespace EBMS.Data.Services
             if (fromDate > toDate)
                 return null!;
 
-            var books = _context.Books.Where(x => x.Published_at >= fromDate && x.Published_at <= toDate);
+            //var books = _context.Books.Where(x => x.Published_at >= fromDate && x.Published_at <= toDate);
+            var books = GetAllByPredicate(x => x.Published_at >= fromDate && x.Published_at <= toDate);
 
-            if(books.Count() <= 0)
+            if (books.Count() <= 0)
                 return null!;
 
             foreach (var book in books)
@@ -433,9 +378,11 @@ namespace EBMS.Data.Services
         {
             var result = new List<BookDTO>();
 
-            var books = await _context.Books.Include(x => x.Reviews).ToListAsync();
+            string[] includes = { "Reviews" };
+            //var books = await _context.Books.Include(x => x.Reviews).ToListAsync();
+            var books = await GetAllAsync(includes);
 
-            foreach(var book in books)
+            foreach (var book in books)
             {
                 decimal avgRate = 0m;
                 // Calculate The AVG Rate for each book
@@ -522,7 +469,7 @@ namespace EBMS.Data.Services
             IQueryable<Book> books = _context.Books;
 
             // Search for relevant books by Title and description
-            if(request.query is not null)
+            if (request.query is not null)
                 books = books.Where(x => x.Title.Contains(request.query) || x.Description!.Contains(request.query));
 
             // Sort By Column (Recommended to add Indexes to these columns)
@@ -622,15 +569,5 @@ namespace EBMS.Data.Services
 
             return result;
         }
-
-        private string GetContentType(string fileExt) =>
-            fileExt switch
-            {
-                ".pdf" => "application/pdf",
-                ".txt" => "text/plain",
-                ".doc" => "application/vnd.ms-word",
-                "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                _ => "application/octet-stream"
-            };
     }
 }
