@@ -5,6 +5,7 @@ using EBMS.Infrastructure.IServices;
 using EBMS.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using PayPal.Api;
 
 namespace EBMS.Data.Services
 {
@@ -59,12 +60,14 @@ namespace EBMS.Data.Services
             return result;
         }
 
-        public async Task<ReviewDTO> GetReviewByIdAsync(int id)
+        public ReviewDTO GetReviewByIdAsync(int id)
         {
             var result = new ReviewDTO();
+            string[] includes = { "BookUser", "Book" };
             // Check id the review id is valid
-            var review = await _context.Reviews.Include(u => u.BookUser).Include(b => b.Book).SingleOrDefaultAsync(x => x.Id == id);
-            if(review is null)
+            //var review = await _context.Reviews.Include(u => u.BookUser).Include(b => b.Book).SingleOrDefaultAsync(x => x.Id == id);
+            var review = GetFirstByPredicate(x => x.Id == id, includes);
+            if (review is null)
             {
                 result.Message = "Review is not Found!";
                 return result;
@@ -79,7 +82,9 @@ namespace EBMS.Data.Services
         {
             var result = new List<ReviewDTO>();
 
-            var reviews = await _context.Reviews.Include(u => u.BookUser).Include(b => b.Book).ToListAsync();
+            string[] includes = { "BookUser", "Book" };
+            //var reviews = await _context.Reviews.Include(u => u.BookUser).Include(b => b.Book).ToListAsync();
+            var reviews = await GetAllAsync(includes);
 
             foreach (var review in reviews)
                 result.Add(ReviewDataDTO(review, review.BookUser, review.Book));
@@ -87,11 +92,14 @@ namespace EBMS.Data.Services
             return result;
         }
 
-        public async Task<ReviewDTO> UpdateAsync(int id, string curUserId, ReviewModel model)
+        public ReviewDTO UpdateAsync(int id, string curUserId, ReviewModel model)
         {
             var result = new ReviewDTO();
+
+            string[] includes = { "BookUser", "Book" };
             // Check if review id is valid
-            var review = await _context.Reviews.Include(u => u.BookUser).Include(b => b.Book).SingleOrDefaultAsync(x => x.Id == id);
+            //var review = await _context.Reviews.Include(u => u.BookUser).Include(b => b.Book).SingleOrDefaultAsync(x => x.Id == id);
+            var review = GetFirstByPredicate(x => x.Id == id, includes);
             if (review is null)
             {
                 result.Message = "Review is not Found!";
@@ -153,15 +161,17 @@ namespace EBMS.Data.Services
             if (book is null)
                 return null!;
 
-            var reviews = _context.Reviews.Include(x => x.BookUser).Where(x => x.BookId == id);
+            string[] includes = { "BookUser" };
+            //var reviews = _context.Reviews.Include(x => x.BookUser).Where(x => x.BookId == id);
+            var reviews = GetAllByPredicate(x => x.BookId == id, includes);
 
-            foreach(var review in reviews)
+            foreach (var review in reviews)
                 result.Add(ReviewDataDTO(review, review.BookUser));
 
             return result;
         }
 
-        public async Task<IEnumerable<ReviewDTO>> GetUserReviewsAsync(string userName)
+        public async Task<IEnumerable<ReviewDTO>> GetUserReviewsAsync(string userName, string curUserId)
         {
             var result = new List<ReviewDTO>();
 
@@ -169,8 +179,13 @@ namespace EBMS.Data.Services
             var user = await _userManager.FindByNameAsync(userName);
             if(user is null)
                 return null!;
+            // Check if the current user can access these reviews
+            if (!await _userManager.IsInRoleAsync(user, RolesConstants.SuperAdmin) && !await _userManager.IsInRoleAsync(user, RolesConstants.Admin) && curUserId != user.Id)
+                return null!;
 
-            var reviews = _context.Reviews.Include(x => x.Book).Where(x => x.UserId == user.Id);
+            string[] includes = { "BookUser" };
+            //var reviews = _context.Reviews.Include(x => x.Book).Where(x => x.UserId == user.Id);
+            var reviews = GetAllByPredicate(x => x.UserId == user.Id, includes);
 
             foreach (var review in reviews) 
                 result.Add(ReviewDataDTO(review, null!, review.Book));

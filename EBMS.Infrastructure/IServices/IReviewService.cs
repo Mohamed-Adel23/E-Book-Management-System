@@ -7,13 +7,13 @@ namespace EBMS.Infrastructure.IServices
     public interface IReviewService : IBaseService<Review>
     {
         Task<ReviewDTO> CreateAsync(string curUserId, ReviewModel model);
-        Task<ReviewDTO> GetReviewByIdAsync(int id);
+        ReviewDTO GetReviewByIdAsync(int id);
         Task<IEnumerable<ReviewDTO>> GetAllReviewsAsync();
-        Task<ReviewDTO> UpdateAsync(int id, string curUserId, ReviewModel model);
+        ReviewDTO UpdateAsync(int id, string curUserId, ReviewModel model);
         Task<bool> DeleteAsync(int id, string curUserId);
 
         // Features
         Task<IEnumerable<ReviewDTO>> GetBookReviewsAsync(int id);
-        Task<IEnumerable<ReviewDTO>> GetUserReviewsAsync(string userName);
+        Task<IEnumerable<ReviewDTO>> GetUserReviewsAsync(string userName, string curUserId);
     }
 }

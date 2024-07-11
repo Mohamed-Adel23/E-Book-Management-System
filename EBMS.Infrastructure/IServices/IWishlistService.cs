@@ -7,6 +7,6 @@ namespace EBMS.Infrastructure.IServices
     {
         Task<WishlistDTO> AddToWishlistAsync(string curUserId, WishlistModel model);
         Task<IEnumerable<WishlistDTO>> GetUserWishlistAsync(string curUserId);
-        Task<bool> RemoveFromWishlist(string curUserId, WishlistModel model);
+        bool RemoveFromWishlist(string curUserId, WishlistModel model);
     }
 }

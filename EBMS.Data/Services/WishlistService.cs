@@ -26,8 +26,9 @@ namespace EBMS.Data.Services
                 return result;
             }
             // Check if the current user already add this book to wishlist
-            var item = await _context.Wishlists.SingleOrDefaultAsync(x => x.BookId == model.BookId && x.UserId == curUserId);
-            if(item is not null)
+            //var item = await _context.Wishlists.SingleOrDefaultAsync(x => x.BookId == model.BookId && x.UserId == curUserId);
+            var item = GetFirstByPredicate(x => x.BookId == model.BookId && x.UserId == curUserId);
+            if (item is not null)
             {
                 result.Message = "This book has been already added before!";
                 return result;
@@ -53,8 +54,9 @@ namespace EBMS.Data.Services
             var result = new List<WishlistDTO>();
 
             // Check if the current user has a wishlist
-            var wishlist = await _context.Wishlists.Where(x => x.UserId == curUserId).ToListAsync();
-            if(wishlist.Count <= 0)
+            //var wishlist = await _context.Wishlists.Where(x => x.UserId == curUserId).ToListAsync();
+            var wishlist = GetAllByPredicate(x => x.UserId == curUserId).ToList();
+            if (wishlist.Count <= 0)
                 return null!;
 
             foreach (var item in wishlist)
@@ -63,10 +65,11 @@ namespace EBMS.Data.Services
             return result;
         }
 
-        public async Task<bool> RemoveFromWishlist(string curUserId, WishlistModel model)
+        public bool RemoveFromWishlist(string curUserId, WishlistModel model)
         {
-            // Check if the requested book is already in the wishlist
-            var item = await _context.Wishlists.SingleOrDefaultAsync(x => x.UserId == curUserId && x.BookId == model.BookId);
+            // Check if the requested book is not in the wishlist
+            //var item = await _context.Wishlists.SingleOrDefaultAsync(x => x.UserId == curUserId && x.BookId == model.BookId);
+            var item = GetFirstByPredicate(x => x.BookId == model.BookId && x.UserId == curUserId);
             if (item is null)
                 return false;
 
@@ -94,6 +97,7 @@ namespace EBMS.Data.Services
 
             result.BookData = new WishlistBookDTO()
             {
+                Id = bookId,
                 Title = book.Title,
                 Desscription = book.Description,
                 CoverImage = book.BookCoverImage,
