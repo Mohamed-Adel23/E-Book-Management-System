@@ -173,4 +173,4 @@ and advanced authentication with JWT and refresh tokens for secure user manageme
 ![payment-success](https://github.com/user-attachments/assets/e2d6fc2b-b786-4775-aa9e-30eb6d77a733)
 
 ### Email with Order details
-![e-book-db-diagram](https://github.com/user-attachments/assets/23a21d77-0462-471f-8531-898a454c3f36)
+![email-ebm](https://github.com/user-attachments/assets/e7d4193a-90e0-4759-ae91-ab7b8a2413d7)
