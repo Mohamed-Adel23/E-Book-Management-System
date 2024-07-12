@@ -141,9 +141,9 @@ and advanced authentication with JWT and refresh tokens for secure user manageme
    ```
 3. Make your changes
 4. Commit your changes
-  ```bash
-  git commit -m 'Add some feature
-  ```
+   ```bash
+   git commit -m 'Add some feature
+   ```
 5. Push to the branch
    ```bash
    git push origin feature-name
@@ -154,3 +154,23 @@ and advanced authentication with JWT and refresh tokens for secure user manageme
 - [x] [Mohamed Adel Elsayed](https://github.com/Mohamed-Adel23)
 
 ## Resources 📚
+- [x] [Metigator | عصام عبدالنبي](https://www.youtube.com/@Metigator)
+- [x] [DevCreed | محمد الهلالي](https://www.youtube.com/@DevCreed)
+- [x] [Mohamad Lawand](https://www.youtube.com/@MohamadLawand)
+- [x] [Milan Jovanović](https://www.youtube.com/@MilanJovanovicTech)
+
+## Screenshots 🎥
+### Database Diagram
+![e-book-db-diagram](https://github.com/user-attachments/assets/413d8ea8-3b2d-4fc0-9c1a-ee9d1e4c31a6)
+
+### Register
+![register](https://github.com/user-attachments/assets/f1567944-0913-4219-a222-2ffe6a49659b)
+
+### Pagination
+![pagination](https://github.com/user-attachments/assets/8ec49bc6-851d-4656-ac65-1bdd75859c77)
+
+### Payment
+![payment-success](https://github.com/user-attachments/assets/e2d6fc2b-b786-4775-aa9e-30eb6d77a733)
+
+### Email with Order details
+![e-book-db-diagram](https://github.com/user-attachments/assets/23a21d77-0462-471f-8531-898a454c3f36)
